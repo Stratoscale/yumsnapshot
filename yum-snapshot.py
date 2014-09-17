@@ -53,19 +53,13 @@ def listBucket():
     out = subprocess.check_output( cmd, shell = True )
     return out.split( '\n' )
 
-def ReleaseFormat( release ):
-    if re.match("^\d\.\d$", release ) is None:
-        msg = "%s is not in the correct format #.#" % release
-        raise argparse.ArgumentTypeError(msg)
-    return release
-
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     parser = argparse.ArgumentParser( description = 'handle yum frozen repository', usage = 'yum-snapshot' + '<action>' )
     subparsers = parser.add_subparsers( dest = 'action', help = 'sub-command help' )
     parser_add = subparsers.add_parser( 'create', help = 'create a yum update repository snapshot' )
     parser_add.add_argument( '-distro', help = 'the distribution that will be snapshot, defaults to centos ', default = 'centos' )
-    parser_add.add_argument( '-release', type = ReleaseFormat, help = 'the release that will be snapshot, defaults to 7.0', default = '7.0' )
+    parser_add.add_argument( '-release', help = 'the release that will be snapshot, defaults to 7', default = '7' )
     parser_add.add_argument( '-arch', help = 'the architecture that will be snapshot, defaults to x86_64 ', default = 'x86_64' )
     parser_add.add_argument( '-cwd', help = 'the working directory, defaults to getcwd()', default = None )
 
