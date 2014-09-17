@@ -12,21 +12,21 @@ import subprocess
 
 def createSnapshot( distro, release, arch, cwd = None ):
     source = getSnapshotSource( distro, release, arch )
-    repoLocalDir = createRepoLocalDir( distro, release, arch , cwd )
+    snapshotDirName = '%s-%s-%s-updates/%s' % ( distro, release, arch, time.strftime( "%Y-%m-%d-%H%M%S" ))
+    repoLocalDir = createRepoLocalDir( snapshotDirName, cwd )
     logging.info( 'Creating mirror' )
     createLocalmirror( source, repoLocalDir )
     logging.info( 'Uploading to S3' )
     uploadToS3( repoLocalDir, config.S3_BUCKET )
     shutil.rmtree( repoLocalDir )
     logging.info( 'Done.' )
-    logging.info( 'Repository base url is: <bucket_url>/%s' % os.path.basename( repoLocalDir ) )
+    logging.info( 'Repository base url is: <bucket_url>/' + snapshotDirName )
 
 def getSnapshotSource( distro, release, arch ):
     source = config.sources[distro]
     return source % dict( release = release, arch = arch )
 
-def createRepoLocalDir( distrao, release, arch, cwd = None ):
-    snapshotDir = '%s-%s-%s/' % ( distrao, release, arch ) + time.strftime( "%Y-%m-%d-%H%M%S" )
+def createRepoLocalDir( snapshotDir, cwd = None ):
     if not cwd:
         cwd = os.getcwd()
     path = os.path.join( cwd, snapshotDir )
@@ -45,13 +45,17 @@ def uploadToS3( repoLocalDir, targetBucket ):
 
 def listAllSnapshots():
     for entry in listBucket():
-        if entry.endswith( '/' ):
-            print entry.split( '/' )[3]
+        print entry
 
 def listBucket():
-    cmd = 's3cmd ls ' + config.S3_BUCKET
-    out = subprocess.check_output( cmd, shell = True )
-    return out.split( '\n' )
+    cmd = 's3cmd ls '
+    out = subprocess.check_output( cmd + config.S3_BUCKET, shell = True )
+    ret = []
+    for entry in  out.split( '\n' ):
+        if entry.endswith( '/' ):
+            ret.append( subprocess.check_output( cmd + entry.split( 'DIR' )[1], shell = True ))
+    return ret
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
