@@ -5,14 +5,13 @@ import config
 import logging
 import os
 import time
-import re
 import shutil
 import subprocess
 
 
-def createSnapshot( distro, release, arch, cwd = None ):
-    source = getSnapshotSource( distro, release, arch )
-    snapshotDirName = '%s-%s-%s-updates/%s' % ( distro, release, arch, time.strftime( "%Y-%m-%d-%H%M%S" ))
+def createSnapshot( distro, release, repo, arch, cwd = None ):
+    source = getSnapshotSource( distro, release, repo, arch )
+    snapshotDirName = '%s-%s-%s-%s/%s' % ( distro, release, repo, arch, time.strftime( "%Y-%m-%d-%H%M%S" ))
     repoLocalDir = createRepoLocalDir( snapshotDirName, cwd )
     logging.info( 'Creating mirror' )
     createLocalmirror( source, repoLocalDir )
@@ -22,9 +21,9 @@ def createSnapshot( distro, release, arch, cwd = None ):
     logging.info( 'Done.' )
     logging.info( 'Repository base url is: <bucket_url>/' + snapshotDirName )
 
-def getSnapshotSource( distro, release, arch ):
+def getSnapshotSource( distro, release, repo, arch ):
     source = config.sources[distro]
-    return source % dict( release = release, arch = arch )
+    return source % dict( release = release, repo = repo, arch = arch )
 
 def createRepoLocalDir( snapshotDir, cwd = None ):
     if not cwd:
@@ -64,6 +63,7 @@ if __name__ == '__main__':
     parser_add = subparsers.add_parser( 'create', help = 'create a yum update repository snapshot' )
     parser_add.add_argument( '-distro', help = 'the distribution that will be snapshot, defaults to centos ', default = 'centos' )
     parser_add.add_argument( '-release', help = 'the release that will be snapshot, defaults to 7', default = '7' )
+    parser_add.add_argument( '-repo', help = 'the repository that will be snapshot, defaults to updates', default = 'updates' )
     parser_add.add_argument( '-arch', help = 'the architecture that will be snapshot, defaults to x86_64 ', default = 'x86_64' )
     parser_add.add_argument( '-cwd', help = 'the working directory, defaults to getcwd()', default = None )
 
@@ -71,6 +71,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.action == 'create':
-        createSnapshot( args.distro, args.release, args.arch, args.cwd  )
+        createSnapshot( args.distro, args.release, args.repo, args.arch, args.cwd  )
     elif args.action == 'list':
         listAllSnapshots()
